@@ -1,4 +1,5 @@
 const Admin = require("../models/admin.model");
+const jwt = require("jsonwebtoken");
 
 // Create an admin
 exports.createAdmin = async (req, res) => {
@@ -114,14 +115,71 @@ exports.setBlockStatus = async (req, res) => {
     admin.blockedAt = blocked ? new Date() : null;
     await admin.save();
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: `Admin ${blocked ? "blocked" : "unblocked"}`,
-      });
+    return res.status(200).json({
+      success: true,
+      message: `Admin ${blocked ? "blocked" : "unblocked"}`,
+    });
   } catch (err) {
     console.error("setBlockStatus error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// Admin login
+// POST /api/admins/login
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ success: false, message: "email and password are required" });
+    }
+
+    const admin = await Admin.findOne({ email });
+    if (!admin) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
+    }
+
+    if (admin.blocked) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Admin is blocked" });
+    }
+
+    const match = await admin.comparePassword(password);
+    if (!match) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
+    }
+
+    const secret = process.env.JWT_SECRET || "change_this_secret";
+    const expiresIn = process.env.JWT_EXPIRES_IN || "7d";
+
+    const payload = {
+      id: admin._id,
+      email: admin.email,
+      fullname: admin.fullname,
+      role: "admin",
+    };
+
+    const token = jwt.sign(payload, secret, { expiresIn });
+
+    const adminObj = admin.toObject();
+    delete adminObj.password;
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
+      admin: adminObj,
+    });
+  } catch (err) {
+    console.error("login error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
