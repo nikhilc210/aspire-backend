@@ -27,6 +27,9 @@ app.use("/api/contacts", require("./routes/contact.routes"));
 // Upload routes
 app.use("/api/uploads", require("./routes/upload.routes"));
 
+// Application query routes (fetch applications by user or job)
+app.use("/api/applications", require("./routes/applications.routes"));
+
 // Convenience route: fetch all jobs (mount at app level to ensure matching)
 app.get("/api/jobs/all", (req, res) => {
   // require here to avoid circular dependency during module load
