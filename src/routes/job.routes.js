@@ -5,6 +5,7 @@ const {
   getJobs,
   updateJob,
   getAllJobs,
+  getJobById,
   setJobBlockStatus,
 } = require("../controllers/job.controller");
 
@@ -16,6 +17,9 @@ router.get("/", getJobs);
 
 // GET /api/jobs/all - fetch all jobs (no pagination)
 router.get("/all", getAllJobs);
+
+// GET /api/jobs/:id - fetch single job details
+router.get("/:id", getJobById);
 
 // PATCH /api/jobs/:id - update a job
 // PATCH /api/jobs/:id/block - block or unblock a job

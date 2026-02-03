@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Job = require("../models/job.model");
 
 // Create a job posting
@@ -140,12 +141,10 @@ exports.setJobBlockStatus = async (req, res) => {
     job.blockedAt = blocked ? new Date() : null;
     await job.save();
 
-    return res
-      .status(200)
-      .json({
-        success: true,
-        message: `Job ${blocked ? "blocked" : "unblocked"}`,
-      });
+    return res.status(200).json({
+      success: true,
+      message: `Job ${blocked ? "blocked" : "unblocked"}`,
+    });
   } catch (err) {
     console.error("setJobBlockStatus error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
@@ -164,6 +163,29 @@ exports.getAllJobs = async (req, res) => {
     });
   } catch (err) {
     console.error("getAllJobs error:", err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// Get a single job by id
+// GET /api/jobs/:id
+exports.getJobById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid job id" });
+    }
+
+    const job = await Job.findById(id).lean();
+    if (!job) {
+      return res.status(404).json({ success: false, message: "Job not found" });
+    }
+
+    return res.status(200).json({ success: true, message: "Job fetched", job });
+  } catch (err) {
+    console.error("getJobById error:", err);
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
